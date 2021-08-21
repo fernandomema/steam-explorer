@@ -9,11 +9,14 @@
   "devDependencies": {
     "@sveltejs/adapter-vercel": "next",
     "@sveltejs/kit": "next",
-    "svelte": "^3.38.3"
+    "svelte": "^3.38.3",
+    "svelte-swipe": "^1.8.1"
   },
   "dependencies": {
+    "jsdom": "^16.7.0",
     "prettier": "^2.3.2",
-    "prettier-plugin-svelte": "^2.3.1"
+    "prettier-plugin-svelte": "^2.3.1",
+    "swiper": "^6.8.1"
   },
   "prettier": {
     "arrowParens": "always",

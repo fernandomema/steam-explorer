@@ -1,47 +1,66 @@
 <script context="module">
-  export async function load({ fetch }) {
-    
+  export async function load({ page, fetch, session, context }) {
+    return {
+      props: {
+        gameData: await getGameData(page, fetch, session, context),
+        similarGames: await getSimilarGames(page, fetch, session, context)
+      }
+    };
+	}
+
+  async function getGameData(page, fetch, session, context) {
+    const url = `/api/game/${page.params.slug}`;
+		const res = await fetch(url);
+
+		if (res.ok) {
+      var data = await res.json();
+      console.log(data[page.params.slug].data);
+			return data[page.params.slug].data;
+		}
+
+		return {
+			status: res.status,
+			error: new Error(`Could not load ${url}`)
+		};
+  }
+
+  async function getSimilarGames(page, fetch, session, context) {
+    const url = `/api/game/${page.params.slug}/steampeek`;
+		const res = await fetch(url);
+
+		if (res.ok) {
+      var data = await res.json();
+      console.log(data);
+			return data;
+		}
+
+		return {
+			status: res.status,
+			error: new Error(`Could not load ${url}`)
+		};
   }
   
 </script>
 
 <script>
-  export let launches;
-  // Swiper Configuration
-var swiper = new Swiper(".swiper-container", {
-  slidesPerView: 1.5,
-  spaceBetween: 10,
-  centeredSlides: true,
-  freeMode: true,
-  grabCursor: true,
-  loop: true,
-  pagination: {
-    el: ".swiper-pagination",
-    clickable: true
-  },
-  autoplay: {
-    delay: 4000,
-    disableOnInteraction: false
-  },
-  navigation: {
-    nextEl: ".swiper-button-next",
-    prevEl: ".swiper-button-prev"
-  },
-  breakpoints: {
-    500: {
-      slidesPerView: 1
-    },
-    700: {
-      slidesPerView: 1.5
-    }
-  }
-});
+  // Import Swiper Svelte components
+  import { Swipe, SwipeItem } from "svelte-swipe";
 
+  const swipeConfig = {
+    autoplay: false,
+    delay: 2000,
+    showIndicators: true,
+    transitionDuration: 1000,
+    defaultIndex: 0,
+  };
+  
+  export let gameData;
+  export let similarGames;
 </script>
 
     <main class="main-content">
 
-      <div class="overlay overflow-hidden pe-n"><img src="assets/img/bg/bg_shape.png" alt="Background shape"></div>
+      <div class="overlay overflow-hidden pe-n"><img src="/assets/img/bg/bg_shape.png" alt="Background shape"></div>
 
       <!-- Start Content Area -->
       <div class="content-section text-light pt-8">
@@ -53,10 +72,10 @@ var swiper = new Swiper(".swiper-container", {
                   <ol class="breadcrumb-product breadcrumb-nowrap breadcrumb breadcrumb-angle bg-transparent pl-0 pr-0 mb-0">
                     <li class="breadcrumb-item"><a href="#">All Games</a></li>
                     <li class="breadcrumb-item"><a href="#">Action Games</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Explosive: Blast Definitive Edition</li>
+                    <li class="breadcrumb-item active" aria-current="page">{gameData?.name}</li>
                   </ol>
                 </nav>
-                <h3 class="product_name mb-4">Explosive: Blast Definitive Edition</h3>
+                <h3 class="product_name mb-4">{gameData?.name}</h3>
                 <div class="d-flex flex-wrap align-items-center">
                   <div class="review d-flex">
                     <div class="review_score">
@@ -84,21 +103,18 @@ var swiper = new Swiper(".swiper-container", {
                   <div class="product-body">
                     <!--Carousel Wrapper-->
                     <div class="carousel-product">
-                      <div class="slider text-secondary" data-slick="product-body">
-                        <img src="assets/img/content/product/01.jpg" alt="Game">
-                        <img src="assets/img/content/product/02.jpg" alt="Game">
-                        <img src="assets/img/content/product/03.jpg" alt="Game">
-                        <img src="assets/img/content/product/05.jpg" alt="Game">
-                        <img src="assets/img/content/product/04.jpg" alt="Game">
-                      </div>
-                      <div class="slider product-slider-nav text-secondary">
-                        <div class="slide-item px-1"><img src="assets/img/content/product/01.jpg" class="screenshot" alt="Game"></div>
-                        <div class="slide-item px-1"><img src="assets/img/content/product/02.jpg" class="screenshot" alt="Game"></div>
-                        <div class="slide-item px-1"><img src="assets/img/content/product/03.jpg" class="screenshot" alt="Game"></div>
-                        <div class="slide-item px-1"><img src="assets/img/content/product/05.jpg" class="screenshot" alt="Game"></div>
-                        <div class="slide-item px-1"><img src="assets/img/content/product/04.jpg" class="screenshot" alt="Game"></div>
+                      <div class="swipe-holder">
+                        <Swipe {...swipeConfig}>
+                          
+                          {#each gameData.screenshots as image}
+                            <SwipeItem>
+                              <img src="{image.path_full}" alt="Game">
+                            </SwipeItem>
+                          {/each}
+                        </Swipe>
                       </div>
                     </div>
+
                     <!--/.Carousel Wrapper-->
 
                     <div class="alert alert-no-border alert-share d-flex mb-6" role="alert">
@@ -114,7 +130,7 @@ var swiper = new Swiper(".swiper-container", {
                       <hr class="border-secondary my-2">
                       <div>
                         <div class="collapse readmore" id="collapseSummary">
-                          <p>Sed placerat posuere sem ut luctus. Nunc nec odio luctus, eleifend enim nec, pretium arcu. Nam lobortis metus at ipsum dignissim, in consequat nunc laoreet. Suspendisse malesuada suscipit aliquet. Aliquam sit amet justo nibh. Phasellus tincidunt massa nec vestibulum accumsan. Proin eleifend dapibus tortor eu laoreet. In nunc mauris, elementum a magna id, porttitor sagittis mi. Integer velit quam, feugiat ac faucibus sed, vestibulum et massa. Fusce at lectus dui. Pellentesque pretium, velit non ornare ultrices, turpis metus pellentesque tellus, ac tincidunt risus massa non odio. Nullam posuere dignissim ligula, et dignissim odio porta vitae. Curabitur suscipit ultricies pulvinar. Sed ipsum nibh, dictum sit amet mi at, tempus commodo diam. Phasellus vitae nisi in urna rutrum eleifend et nec massa. Donec at mattis eros, ut pellentesque lectus.</p>
+                          <p>{@html gameData.detailed_description}</p>
                         </div>
                         <a class="readmore-btn collapsed" data-toggle="collapse" href="#collapseSummary" aria-expanded="false" aria-controls="collapseSummary"></a>
                       </div>
@@ -133,7 +149,8 @@ var swiper = new Swiper(".swiper-container", {
                         </ul>
                         <div class="tab-content" id="fillupTabContent">
                           <div class="tab-pane fade active show" id="fillup-1" role="tabpanel" aria-labelledby="fillup-home-tab">
-                            <div class="row">
+                          {@html gameData.pc_requirements.minimum}
+                            <div class="row d-none">
                               <div class="col-xs-12 col-lg-6 mb-6 mb-lg-0">
                                 <div class="row">
                                   <div class="col-12">
@@ -304,194 +321,38 @@ var swiper = new Swiper(".swiper-container", {
                     <div class="mb-6">
                       <h6 class="mb-0 fw-400 ls-1 text-uppercase">More like this</h6>
                       <hr class="border-secondary my-2">
-                      <div>
-                      	<div class="owl-carousel carousel_sm" data-carousel-items="1, 2, 3, 3" data-carousel-margin="10" data-carousel-nav="false" data-carousel-dots="true">
-                      		<div class="item">
-                      			<a href="#">
-	                                <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg-c_01.jpg);">
-	                                  <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-	                                    <div class="px-4 py-3 lh-1">
-	                                      <h6 class="mb-1 small-1 text-light text-uppercase">Akamen</h6>
-	                                      <div class="price d-flex flex-wrap align-items-center">
-	                                        <span class="discount_final text-warning small-2">€99.99</span>
-	                                      </div>
-	                                    </div>
-	                                  </div>
-	                                </div>
-                              	</a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg-c_02.jpg);">
-                                      	<div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        	<div class="px-4 py-3 lh-1">
-	                                          	<h6 class="mb-1 small-1 text-light text-uppercase">Punk City</h6>
-	                                          	<div class="price d-flex flex-wrap align-items-center">
-	                                            	<span class="discount_final text-warning small-2">€99.99</span>
-	                                        	</div>
-                                        	</div>
-                                      	</div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg-c_03.jpg);">
+                      <div class="px-4">
+                      	<div class="row">
+                      		{#each similarGames as similarGame}
+                            <div class="item col-6 p-0">
+                              <a href="#">
+                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url({similarGame.image});">
                                       <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
                                         <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Transaction</h6>
+                                          <h6 class="mb-1 small-1 text-light text-uppercase">{similarGame.name}</h6>
                                           <div class="price d-flex flex-wrap align-items-center">
                                             <span class="discount_final text-warning small-2">€99.99</span>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg_04.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Golden Mask</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg_05.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">ONI</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg_06.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Engineer</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-t ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg_07.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Informant</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg_08.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Haku</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
-                      		<div class="item">
-                      			<a href="#">
-                                    <div class="d-flex h-100 bs-c br-n bp-c ar-8_5 position-relative" style="background-image: url(assets/img/content/cont/cg-c_02.jpg);">
-                                      <div class="position-absolute w-100 l-0 b-0 bg-dark_A-80 text-light">
-                                        <div class="px-4 py-3 lh-1">
-                                          <h6 class="mb-1 small-1 text-light text-uppercase">Punk City</h6>
-                                          <div class="price d-flex flex-wrap align-items-center">
-                                            <span class="discount_final text-warning small-2">€99.99</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                </a>
-                      		</div>
+                                  </a>
+                            </div>
+                          {/each}
                       	</div>
                       </div>
                     </div>
-                    <div class="mb-0">
-                      <div>
-                        <div>
-                          <p class="small">*Duis sit amet lectus pharetra, placerat ante et, varius urna. Praesent euismod lacinia lacus, at posuere quam vestibulum ut. Vivamus eu ligula at massa laoreet commodo. In consequat aliquet scelerisque. Proin dapibus velit quis suscipit interdum. Vestibulum eu sapien eget lorem volutpat dapibus molestie a metus. Proin in turpis a arcu luctus euismod. Sed vitae ante at leo bibendum blandit nec vel mauris. Ut laoreet bibendum lobortis.</p>
-                        </div>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               </div>
             </div>
             <div class="col-lg-4">
               <div class="bg-dark_A-20 p-4 mb-4">
-                <img src="assets/img/content/store/h-10.jpg" alt="Product" class="mb-3">
-                <p>Sed neque nibh, vehicula vel molestie eget, venenatis in odio. Nulla nec metus sagittis, scelerisque leo eu, vestibulum justo. Mauris rhoncus arcu eu sagittis consequat.</p>
-                <div class="price-wrapper">
-                  <div class="mb-3">
-                    <div class="price">
-                        <div class="price-prev">300$</div>
-                        <div class="price-current">224$</div>
-                      </div>
-                    <div class="discount">
-                        Save: $20.00 (33%)
-                    </div>
-                  </div>
-                  <div class="price-box mb-4">
-                      <div class="mr-4">
-                        <div class="quantity-group input-group">
-                            <input type="text" class="form-control form-control-sm h-auto" value="1">
-                        </div>
-                      </div>
-                    <div class="flex-1"><a href="#" class="btn btn-block btn-warning"><i class="fas fa-shopping-cart"></i> Add to Cart</a></div>
-                  </div>
-                </div>
-                <div>
-                	<div class="row mb-4">
-	                	<form class="col mb-3 mb-md-0">
-		                    <div class="custom-control custom-checkbox">
-		                      <input class="custom-control-input" type="checkbox" value="" id="comp_check">
-		                      <label class="custom-control-label fw-600 text-uppercase small-5" for="comp_check">
-		                        Add To Compare
-		                      </label>
-		                    </div>
-	                	</form>
-	                	<form class="col-sm-auto">
-		                    <div class="custom-control custom-checkbox">
-		                      <input class="custom-control-input" type="checkbox" value="" id="gift_check">
-		                      <label class="custom-control-label fw-600 text-uppercase small-5" for="gift_check">
-		                        Buy as gift
-		                      </label>
-		                    </div>
-	                	</form>
-                	</div>
-                	<a href="#" class="btn btn-block btn-secondary"><i class="fas fa-heart"></i> Add to wishlist</a>
-                </div>
+                <img src="{gameData.header_image}" alt="Product" class="mb-3">
+                <p>{gameData.short_description}</p>
               </div>
-              <div class="bg-dark_A-20 p-4">
+              <div class="bg-dark_A-20 p-4 d-none">
                 <h6 class="mb-3">Game Information</h6>
                 <hr class="border-secondary mt-2 mb-4">
                 <ul class="list-unstyled mb-3">
@@ -559,42 +420,14 @@ var swiper = new Swiper(".swiper-container", {
             <hr class="border-secondary my-2">
           </div>
           <div class="owl-carousel" data-carousel-items="1, 2, 3, 6">
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-01.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">Creature 2020</a>
-              <span class="time d-block small-4">26 Sep, 2021</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 23</span>
-            </div>
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-02.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">Shadow Leap</a>
-              <span class="time d-block small-4">14 Sep, 2021</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 57</span>
-            </div>
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-04.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">Golden Mask</a>
-              <span class="time d-block small-4">18 Oct, 2021</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 57</span>
-            </div>
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-03.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">Mechaone</a>
-              <span class="time d-block small-4">05 Oct, 2021</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 57</span>
-            </div>
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-05.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">ONE</a>
-              <span class="time d-block small-4">16 Oct, 2021</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 57</span>
-            </div>
-            <div class="item mx-3">
-              <img src="assets/img/content/store/h-06.jpg" alt="Game" class="mb-3">
-              <a href="#" class="text-uppercase fw-500 small-2 mb-0">Engineer</a>
-              <span class="time d-block small-4">27 Oct, 2020</span>
-              <span class="d-block small text-warning"><i class="far fa-eye"></i> 57</span>
-            </div>
+            {#each gameData.screenshots as image}
+              <div class="item mx-3">
+                <img src="{image.path_full}" alt="Game" class="mb-3">
+                <a href="#" class="text-uppercase fw-500 small-2 mb-0">Creature 2020</a>
+                <span class="time d-block small-4">26 Sep, 2021</span>
+                <span class="d-block small text-warning"><i class="far fa-eye"></i> 23</span>
+              </div>
+            {/each}
           </div>
         </div>
       </section>
@@ -609,7 +442,7 @@ var swiper = new Swiper(".swiper-container", {
                   <!-- Item -->
                   <div class="col-12 mb-7">
                     <div class="d-flex flex-wrap flex-sm-nowrap">
-                      <div><img src="assets/img/avatar/1.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
+                      <div><img src="/assets/img/avatar/1.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
                       <div class="review-item ml-sm-4">
                         <div class="small d-flex align-items-start">
                           <!-- user -->
@@ -658,7 +491,7 @@ var swiper = new Swiper(".swiper-container", {
                   <!-- Item -->
                   <div class="col-12 mb-7">
                     <div class="d-flex flex-wrap flex-sm-nowrap">
-                      <div><img src="assets/img/avatar/2.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
+                      <div><img src="/assets/img/avatar/2.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
                       <div class="review-item ml-sm-4">
                         <div class="small d-flex align-items-start">
                           <!-- user -->
@@ -707,7 +540,7 @@ var swiper = new Swiper(".swiper-container", {
                   <!-- Item -->
                   <div class="col-12 mb-7">
                     <div class="d-flex flex-wrap flex-sm-nowrap">
-                      <div><img src="assets/img/avatar/3.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
+                      <div><img src="/assets/img/avatar/3.jpg" class="d-none d-sm-block avatar rounded" alt="Avatar"></div>
                       <div class="review-item ml-sm-4">
                         <div class="small d-flex align-items-start">
                           <!-- user -->
@@ -829,5 +662,9 @@ var swiper = new Swiper(".swiper-container", {
 
 
 <style>
+.swipe-holder{
+    height: 30vh;
+    width: 100%;
+  }
 
 </style>
